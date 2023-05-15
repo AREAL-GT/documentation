@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>AREAL Hardware Standup Guide &#8212; AREAL External 0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Motion-Capture Experimental Instructions" href="../Experimental%20Operation/exp_vicon.html" />
+    <link rel="prev" title="Welcome to AREAL’s External Documentation!" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="areal-hardware-standup-guide">
+<h1>AREAL Hardware Standup Guide<a class="headerlink" href="#areal-hardware-standup-guide" title="Permalink to this heading">¶</a></h1>
+<p>This guide was written using a Raspberry Pi (RPi) 4B with 8Gb RAM. The initial
+RPi setup steps will be easiest if a monitor and keyboard are avaliable for use.
+A Holybro Pixhawk 6X with standard baseboard was used as the flight control
+unit (FCU). It is also assumed that the Pixhawk has a compatible telemetry
+radio installed. This guide used the <a class="reference external" href="https://holybro.com/collections/telemetry-radios/products/sik-telemetry-radio-v3">Holybro SiK v3</a>.</p>
+<section id="raspberry-pi-companion-computer-setup">
+<h2>Raspberry Pi Companion Computer Setup<a class="headerlink" href="#raspberry-pi-companion-computer-setup" title="Permalink to this heading">¶</a></h2>
+<section id="ubuntu-image-installation">
+<h3>Ubuntu Image Installation<a class="headerlink" href="#ubuntu-image-installation" title="Permalink to this heading">¶</a></h3>
+<p>The first step is to burn a new image onto a fresh microSD using the official
+imager tool. A tutorial is found at the following <a class="reference external" href="https://blog.electroica.com/raspberry-pi-official-imager-burn-raspbian-to-sd-card/">IMAGER</a>.
+Use the image ‘Ubuntu Server 20.04.5 64-bit’, found in the general-purpose OS
+section of the choose operating system menu.</p>
+<p>Next, connect the monitor and keyboard to the RPi, put in the microSD card, and
+power it up. The default username and password are both ‘ubuntu’. Set a new
+password as prompted.</p>
+</section>
+<section id="ubuntu-setup">
+<h3>Ubuntu Setup<a class="headerlink" href="#ubuntu-setup" title="Permalink to this heading">¶</a></h3>
+<p>To start out, connect the RPi to an ethernet port for initial internet
+connection. WiFi will be setup shortly, but the initial internet connection is
+most easily setup over ethernet.</p>
+<p>In order to test the internet connection, use the following command to ping
+google.com:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">ping google.com</span>
+</pre></div>
+</div>
+<p>Upon establishing an internet connection, the RPi will begin updating in the
+background. This might take a while, but it just has to be allowed to finish.
+When the background update is complete, run the following two commands to
+update all of the system packages.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo apt update</span>
+<span class="go">sudo apt upgrade</span>
+</pre></div>
+</div>
+<section id="adding-optionally-active-ubuntu-desktop">
+<h4>Adding Optionally-Active Ubuntu Desktop<a class="headerlink" href="#adding-optionally-active-ubuntu-desktop" title="Permalink to this heading">¶</a></h4>
+<p>We are going to add an install of Ubuntu desktop to the RPi because
+configuration of networks and some other parts of the system is most easily
+done in the GUI interface.</p>
+<p>The guide to install Ubuntu desktop on a server installation is found at the
+following <a class="reference external" href="https://www.wikihow.com/Install-Gnome-on-Ubuntu">DESKTOP-INSTALL</a>.
+Make sure to only install the “minimal” desktop option described in step 4.</p>
+<p>Once the desktop is installed, it can be enabled and disabled as per the
+instructions at the following <a class="reference external" href="https://linuxconfig.org/how-to-disable-enable-gui-on-boot-in-ubuntu-20-04-focal-fossa-linux-desktop">DESKTOP-CONTROL</a>.</p>
+<p>The command to enable Ubuntu Desktop is:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo systemctl set-default graphical</span>
+</pre></div>
+</div>
+<p>The command to disable Ubuntu Desktop (change it back to server) is:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo systemctl set-default multi-user</span>
+</pre></div>
+</div>
+<p>After running either command, reboot the RPi to make the changes take effect.
+The command to reboot the RPi is:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo reboot</span>
+</pre></div>
+</div>
+</section>
+<section id="network-setup">
+<h4>Network Setup<a class="headerlink" href="#network-setup" title="Permalink to this heading">¶</a></h4>
+<p>First, enable Ubuntu desktop as described above. Allow any updates to occur and
+restart the RPi if prompted. Make sure to decline the upgrade to Ubuntu 22.04
+if offered.</p>
+<p>Next, install the netplan package. This is done with the following command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo apt install net-tools</span>
+</pre></div>
+</div>
+<p>Next, follow the instructions given in the top answer at this post <a class="reference external" href="https://askubuntu.com/questions/1189146/raspberry-pi-4b-ubuntu-19-10-wired-network-unmanaged">WIRED-SETUP</a>
+to enable management of the wired network on the RPi. The changes were
+successful if the menu in the upper right-hand corner says “Wired Connected”
+instead of “Wired Unmanaged”.</p>
+<p>We will cover configuring the wired network for PX4 communications in a later
+section on the PX4 setup page. [ADD LINK TO PX4 WIRED SETUP SECTION HERE]</p>
+<p>The last step in network setup is to connect to Wifi. Connect to your Wifi
+network of choice using the settings managed in the Ubuntu GUI. A guide for
+connecting to eduroam in particular can be found at the following <a class="reference external" href="https://rose-hulman.microsoftcrmportals.com/knowledgebase/article/KA-01010/en-us">EDUROAM-CONNECT</a>.
+A pdf of this webpage is avaliable in the “Raspberry Pi Setup” directory of
+the “AREAL Lab” DropBox folder.</p>
+</section>
+</section>
+<section id="packages-to-install">
+<h3>Packages to Install<a class="headerlink" href="#packages-to-install" title="Permalink to this heading">¶</a></h3>
+<p>Lists of the packages needed for future steps are shown below. It is recommended
+that they all be installed at this point.</p>
+<section id="software-development-tools">
+<h4>Software Development Tools<a class="headerlink" href="#software-development-tools" title="Permalink to this heading">¶</a></h4>
+<p><strong>Git</strong></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo apt-get install git</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="ros-2-installation">
+<h3>ROS 2 Installation<a class="headerlink" href="#ros-2-installation" title="Permalink to this heading">¶</a></h3>
+<p>We will make use of the ros_menu tool provided by Adlink to install ROS, ROS 2,
+and manage sourcing enviroments. In order to install ros_menu, follow the
+instructions under the “Install” heading at the following <a class="reference external" href="https://github.com/Adlink-ROS/ros_menu">ROS_MENU</a>.</p>
+<p>Next, run the following command to update dependencies</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">rosdep update</span>
+</pre></div>
+</div>
+<p>The configurations for ROS 2 are controlled in the “config.yaml” file in the
+“ros_menu” directory. A few changes the default for “config.yaml” need to be
+made. Delete all of the lines below “cmds” unswer the ROS 2 heading, and before
+the ROS 2/ROS 1 bridge heading. In their place add the source commands for your
+workspace(s). The specific source command for our vehicle will be covered in
+the section on downloading and building the needed ROS 2 packages.</p>
+</section>
+<section id="hardware-setup">
+<h3>Hardware Setup<a class="headerlink" href="#hardware-setup" title="Permalink to this heading">¶</a></h3>
+<p>The RPi takes external power from a 5V power supply, with a current capacity of
+up to 3A. We use a 5V, 3A battery elimination circuit (BEC) attached to the UAV
+power distribution board (PDB). The pinout diagram for the RPi 40-pin header is
+found at the following <a class="reference external" href="https://www.raspberrypi.com/documentation/computers/raspberry-pi.html">RPi_PINS</a>.
+The 5V and GND wires should be connected to pins 2/4 and 6 respectively.</p>
+</section>
+</section>
+<section id="pixhawk-setup">
+<h2>Pixhawk Setup<a class="headerlink" href="#pixhawk-setup" title="Permalink to this heading">¶</a></h2>
+<p>The first step in configuring the FCU is to follow the standard PX4
+installation and configuration for a quadcopter. The PX4 configuration guide
+can be found at the following <a class="reference external" href="https://docs.px4.io/main/en/config/">PX4_CONFIG</a>.
+A specific configuration guide for the Holybro X500 v2 can be found at
+<a class="reference external" href="https://docs.px4.io/main/en/frames_multicopter/holybro_x500V2_pixhawk5x.html">X500_CONFIG</a>.</p>
+<p>After completing the standard PX4 setup, manual flights should be performed to
+verify the quadcopters overall operation.</p>
+<p>The next step is to connect the PX4 and companion computer over ethernet. A
+guide for this configuration can be found at <a class="reference external" href="https://docs.px4.io/main/en/advanced_config/ethernet_setup.html">PX4_ETH</a>.
+At this point, the RPi and Pixhawk should be connected with the included
+ethernet cable.</p>
+</section>
+<section id="px4-parameters-for-vicon-camera-feedback">
+<h2>PX4 Parameters for VICON Camera Feedback<a class="headerlink" href="#px4-parameters-for-vicon-camera-feedback" title="Permalink to this heading">¶</a></h2>
+<p>In order to configure the Pixhawk for state feedback from a motion capture
+system (in our case VICON <a class="reference external" href="https://ifl.ae.gatech.edu">GT_IFL</a>), some
+parameters need to be modified. The list of modified parameters is as follows
+(battery, logging parameters have been omitted):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">COM_DISARM_PRFLT</span></code>: 30</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">COM_FLTMODE1</span></code>: 0</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">COM_FLTMODE4</span></code>: 2</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">COM_FLTMODE6</span></code>: 7</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">COM_RCL_EXCEPT</span></code>: 4</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">COM_RC_IN_MODE</span></code>: 0</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">COM_RC_OVERRIDE</span></code>: 3</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EKF2_EV_CTRL</span></code>: 3</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EKF2_EV_DELAY</span></code>: 0.1</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EKF2_EV_NOISE_MD</span></code>: 1</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EKF2_GPS_CHECK</span></code>: 240</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EKF2_GPS_CTRL</span></code>: 4</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EKF2_HGT_REF</span></code>: 3</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">EKF2_IMU_CTRL</span></code>: 1</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MAN_ARM_GESTURE</span></code>: 0</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MAV_0_RATE`</span></code>: 57600</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MAV_1_CONFIG</span></code>: 102</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MIS_TAKEOFF_ALT</span></code>: 0.9</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NAV_RCL_ACT</span></code>: 3</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PWM_AUX_FUNC1</span></code>: 101</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PWM_AUX_FUNC2</span></code>: 102</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PWM_AUX_FUNC3</span></code>: 103</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PWM_AUX_FUNC4</span></code>: 104</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RTL_RETURN_ALT</span></code>: 0.6</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SENS_BOARD_X_OFF</span></code>: 3.209</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SENS_BOARD_Y_OFF</span></code>: -0.204</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SYS_AUTOSTART</span></code>: 4015</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">XRCE_DDS_0_CFG</span></code>: 1000</p></li>
+</ul>
+</section>
+<section id="ros-2-fcs-packages">
+<h2>ROS 2 FCS Packages<a class="headerlink" href="#ros-2-fcs-packages" title="Permalink to this heading">¶</a></h2>
+<p>One of the solutions adopted by the lab for autonomous flight control is the
+ROS 2-PX4 framework. Therefore, the required ROS 2 packages for basic
+autonomous flight are detailed below. These are the packages needed for
+autonomous waypoint traversal, either from onboard sensor data or motion-
+capture position feedback. Links to the detailed documentation pages for the
+various packages mentioned here are linked inline. All ROS 2 code is currently
+assumed to be in Foxy.</p>
+<section id="basic-autonomous-operation-required-for-all">
+<h3>Basic Autonomous Operation (Required for all)<a class="headerlink" href="#basic-autonomous-operation-required-for-all" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">areal_landing_uav_interfaces</span></code>: Provides interface definitions for the required actions and services</dt><dd><ul>
+<li><p>Documentation page: <a class="reference internal" href="../ROS%202%20Packages/areal_ROS2_pkg.html#areal-landing-uav-interfaces"><span class="std std-ref">areal_landing_uav_interfaces</span></a></p></li>
+<li><p>Software repository: <a class="reference external" href="https://github.com/AREAL-GT/areal_landing_uav_interfaces">AREAL_INTERFACE</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">areal_landing_px4_communication</span></code>: Provides ROS 2 actions, servers, publishers, and subscribers for communication and control with a PX4 FMU</dt><dd><ul>
+<li><p>Documentation page: <a class="reference internal" href="../ROS%202%20Packages/areal_ROS2_pkg.html#areal-landing-px4-communication"><span class="std std-ref">areal_landing_px4_communication</span></a></p></li>
+<li><p>Software repository: <a class="reference external" href="https://github.com/AREAL-GT/areal_landing_px4_communication">AREAL_PX4_COMMS</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="motion-capture-vicon-feedback-required-for-motion-capture-flights">
+<h3>Motion Capture VICON Feedback (Required for Motion-Capture Flights)<a class="headerlink" href="#motion-capture-vicon-feedback-required-for-motion-capture-flights" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">ros2-vicon-receiver</span></code>: Written by the <a class="reference external" href="http://opt4smart.dei.unibo.it/index.html">OPT4SMART</a> group at The University of Bologna, publishes objects tracked by VICON to ROS 2 topics</dt><dd><ul>
+<li><p>AREAL lab-specific configuration details: <a class="reference internal" href="../ROS%202%20Packages/ext_ROS2_pkg.html#ros2-vicon-receiver"><span class="std std-ref">ros2-vicon-receiver</span></a></p></li>
+<li><p>Software repository: <a class="reference external" href="https://github.com/OPT4SMART/ros2-vicon-receiver">ROS2_VICON</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="waypoint-behavior-tree-required-for-all">
+<h3>Waypoint Behavior Tree (Required for all)<a class="headerlink" href="#waypoint-behavior-tree-required-for-all" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">areal_new_bt</span></code>: Implementation file for the flight control behavior tree with ROS 2</dt><dd><ul>
+<li><p>Documentation page: <a class="reference internal" href="../ROS%202%20Packages/areal_ROS2_pkg.html#areal-new-bt"><span class="std std-ref">areal_new_bt</span></a></p></li>
+<li><p>Software repository: <a class="reference external" href="https://github.com/AREAL-GT/areal_new_bt">AREAL_BT</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="packages-from-px4-required-for-all">
+<h3>Packages from PX4 (Required for all)<a class="headerlink" href="#packages-from-px4-required-for-all" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">px4_msgs</span></code>: Software repository <a class="reference external" href="https://github.com/PX4/px4_msgs">PX4_MSGS</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">px4_ros_com</span></code>: Software repository <a class="reference external" href="https://github.com/PX4/px4_ros_com">PX4_ROS_COM</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">micro_ros_agent</span></code>: Software repository <a class="reference external" href="https://github.com/micro-ROS/micro-ROS-Agent">uROS_AGENT</a></p></li>
+</ul>
+<p>In order to perform autonomous UAV flights, clone or download the needed
+repositories into a workspace onboard the RPi and build them. If using motion-
+capture, make sure to download the ros2-vicon-receiver package into a seperate
+workspace on a laptop to be used on the same WiFi network as the computer
+running the motion-capture (VICON) system. Also download another copy of the
+areal_landing_px4_communication package to the same computer-based repository.
+Both of these packages are needed to stream VICON positon feedback over
+appropriate ROS 2 topics.</p>
+<p>Now that the UAV has been set up, operational instructions for running
+motion-capture autonomous flight experiments are given in <a class="reference internal" href="../Experimental%20Operation/exp_vicon.html#motion-capture-experimental-instructions"><span class="std std-ref">Motion-Capture Experimental Instructions</span></a>.</p>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/iREAL_header_logo.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../index.html">AREAL External</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">AREAL Hardware Standup Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#raspberry-pi-companion-computer-setup">Raspberry Pi Companion Computer Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pixhawk-setup">Pixhawk Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#px4-parameters-for-vicon-camera-feedback">PX4 Parameters for VICON Camera Feedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ros-2-fcs-packages">ROS 2 FCS Packages</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../Experimental%20Operation/exp_vicon.html">Motion-Capture Experimental Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ROS%202%20Packages/areal_ROS2_pkg.html">AREAL ROS 2 Packages</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ROS%202%20Packages/ext_ROS2_pkg.html">External ROS 2 Packages</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Paper%20Repositories/paper_repos.html">Paper Repositories</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">Welcome to AREAL’s External Documentation!</a></li>
+      <li>Next: <a href="../Experimental%20Operation/exp_vicon.html" title="next chapter">Motion-Capture Experimental Instructions</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, AREAL Lab.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.1.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+      |
+      <a href="../_sources/Hardware Standup Guide/hardware_su.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
